@@ -8,18 +8,24 @@ import java.io.File;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class GachiBot extends Bot {
 
     private final static String PICTURES_DIRECTORY = "pics";
+    private final ConcurrentMap<Long, BotState> map = new ConcurrentHashMap<>();
 
-    public static void main(String[] args){
-        if(args == null || args.length != 2){
-            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
-        } else {
-            ApiContextInitializer.init();
-            Bot.runBot(new GachiBot(args[0], args[1]));
-        }
+    public static void main(String[] args) {
+//        if (args == null || args.length != 2) {
+//            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
+//        } else {
+//            ApiContextInitializer.init();
+//            Bot.runBot(new GachiBot(args[0], args[1]));
+//        }
+
+        ApiContextInitializer.init();
+        Bot.runBot(new GachiBot("1121619285:AAHF7b8rYO-ZP1rfWY-YaU3Kx0hldY_86H0", "GachiBot"));
     }
 
     protected GachiBot(String token, String botName) {
@@ -32,38 +38,41 @@ public class GachiBot extends Bot {
     }
 
     public void onUpdateReceived(Update update) {
-        if(update.hasMessage() && update.getMessage().hasText()){
+        if (update.hasMessage() && update.getMessage().hasText()) {
             Message message = update.getMessage();
             long chatId = message.getChatId();
-            String text = update.getMessage().getText();
-            switch (text){
-                case "/start":
-                        sendTextMessage(chatId, "Чого тобі, шкіряний чоловіче?");
-                    break;
-                case "/kill":
+            String text = update.getMessage().getText().trim();
+            map.putIfAbsent(chatId, BotState.WORKING);
+            if (text.equals("/start")) {
+                map.put(chatId, BotState.WORKING);
+                sendTextMessage(chatId, "Чого тобі, шкіряний чоловіче?");
+            } else if (map.get(chatId) != BotState.STOPPED) {
+                switch (text) {
+                    case "/kill":
                         sendTextMessage(chatId, "Прощавай жорстокий світ!");
-                        System.exit(0);
-                    break;
-                case "/talk":
+                        map.put(chatId, BotState.STOPPED);
+                        break;
+                    case "/talk":
                         List<String> answers = Arrays.asList(
                                 "Ass we can!", "Fuck you!", "Fucking slaves!",
                                 "Take it boy!", "Sucktion!", "Oh shit, i'm sorry",
                                 "Sorry for what?", "Ah ah ah...", "That's turns me on",
                                 "Deep dark fantasies...", "Dungeon master", "Do you like what you see?",
                                 "Stick finger in my ass", "I smoke Marlboro, you smoke cocks");
-                        String answer = answers.get((int)(answers.size()*Math.random()));
+                        String answer = answers.get((int) (answers.size() * Math.random()));
                         sendTextMessage(chatId, answer);
-                    break;
-                case "/randompic":
+                        break;
+                    case "/randompic":
                         String[] filePaths = getResourceFolderFilePaths(PICTURES_DIRECTORY);
                         String filePath = getClass().getClassLoader()
-                                .getResource(PICTURES_DIRECTORY + "/" + filePaths[(int)(filePaths.length * Math.random())]).getPath();
+                                .getResource(PICTURES_DIRECTORY + "/" + filePaths[(int) (filePaths.length * Math.random())]).getPath();
                         File picture = new File(filePath);
                         sendPhotoMessage(chatId, null, picture);
-                    break;
-                 default:
+                        break;
+                    default:
                         sendTextMessage(chatId, "Не знаю, що ти пишеш, але думаю, що тебе звуть Юра/Стас/Андрій/Валентин");
-                     break;
+                        break;
+                }
             }
         }
     }
