@@ -2,6 +2,7 @@ package com.acts.gachibot;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -40,6 +41,19 @@ public abstract class Bot extends TelegramLongPollingBot {
     public Message sendPhotoMessage(long chatId, String caption, File file){
         try {
             SendPhoto send = new SendPhoto().setChatId(chatId).setPhoto(file);
+            if(caption != null){
+                send = send.setCaption(caption);
+            }
+            return execute(send);
+        } catch (TelegramApiException e) {
+            processTheException(e);
+            return null;
+        }
+    }
+
+    public Message sendAnimationMessage(long chatId, String caption, File file){
+        try {
+            SendAnimation send = new SendAnimation().setChatId(chatId).setAnimation(file);
             if(caption != null){
                 send = send.setCaption(caption);
             }
