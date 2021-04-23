@@ -4,20 +4,21 @@ import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GachiBot extends Bot {
 
     private final static String PICTURES_DIRECTORY = "pics";
     private final static String GIFS_DIRECTORY = "gifs";
+    private final static String BOT_SHORTCUT = "@deep_dark_bot";
     private final ConcurrentMap<Long, BotState> map = new ConcurrentHashMap<>();
     private List<String> answers;
 
@@ -33,6 +34,8 @@ public class GachiBot extends Bot {
             ApiContextInitializer.init();
             Bot.runBot(new GachiBot(args[0], args[1]));
         }
+//        ApiContextInitializer.init();
+//        Bot.runBot(new GachiBot("1121619285:AAHF7b8rYO-ZP1rfWY-YaU3Kx0hldY_86H0", "GachiBot"));
     }
 
     protected void loadResources() throws FileNotFoundException {
@@ -50,40 +53,36 @@ public class GachiBot extends Bot {
             if (update.hasMessage() && update.getMessage().hasText()) {
                 Message message = update.getMessage();
                 long chatId = message.getChatId();
+                boolean isGroupChat = message.getChat().isGroupChat() || message.getChat().isSuperGroupChat();
                 String text = update.getMessage().getText().trim();
                 map.putIfAbsent(chatId, BotState.WORKING);
-                if (text.equals("/start")) {
+                if (checkTextIsCommand(text, "start", isGroupChat)) {
                     map.put(chatId, BotState.WORKING);
                     sendTextMessage(chatId, "What are you want, leatherman?");
                 } else if (map.get(chatId) != BotState.STOPPED) {
-                    switch (text) {
-                        case "/kill":
-                            sendTextMessage(chatId, "Goodbye cruel world!");
-                            map.put(chatId, BotState.STOPPED);
-                            break;
-                        case "/talk":
-                            String answer = getRandomAnswer();
-                            sendTextMessage(chatId, answer);
-                            break;
-                        case "/randompic":
-                            File picture = getRandomFileFromDirectory(PICTURES_DIRECTORY);
-                            sendPhotoMessage(chatId, null, picture);
-                            break;
-                        case "/randomgif":
-                            File gif = getRandomFileFromDirectory(GIFS_DIRECTORY);
-                            sendAnimationMessage(chatId, null, gif);
-                            break;
-                        default:
-                            sendTextMessage(chatId, "I can't recognize what are you saying.\n" +
-                                    "Try to spit off fat cock from your mouth " +
-                                    "and repeat with something more understandable (see 'command list')");
-                            break;
+                    if (checkTextIsCommand(text, "stop", isGroupChat)) {
+                        sendTextMessage(chatId, "Goodbye cruel world!");
+                        map.put(chatId, BotState.STOPPED);
+                    } else if (checkTextIsCommand(text, "talk", isGroupChat)) {
+                        String answer = getRandomAnswer();
+                        sendTextMessage(chatId, answer);
+                    } else if (checkTextIsCommand(text, "randompic", isGroupChat)) {
+                        File picture = getRandomFileFromDirectory(PICTURES_DIRECTORY);
+                        sendPhotoMessage(chatId, null, picture);
+                    } else if (checkTextIsCommand(text, "randomgif", isGroupChat)) {
+                        File gif = getRandomFileFromDirectory(GIFS_DIRECTORY);
+                        sendAnimationMessage(chatId, null, gif);
                     }
                 }
             }
         } catch (Exception e) {
             processTheException(e);
         }
+    }
+
+    private boolean checkTextIsCommand(String text, String command, boolean isGroupChat) {
+        command = "/" + command;
+        return isGroupChat ? (command + BOT_SHORTCUT).equals(text) : command.equals(text);
     }
 
     private String getRandomAnswer() {
