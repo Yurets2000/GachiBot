@@ -1,4 +1,4 @@
-package com.acts.gachibot;
+package com.yube.bot;
 
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -14,7 +14,7 @@ public abstract class Bot extends TelegramLongPollingBot {
 
     private final String token, botName;
 
-    protected Bot(String token, String botName){
+    protected Bot(String token, String botName) {
         this.token = token;
         this.botName = botName;
     }
@@ -27,7 +27,7 @@ public abstract class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public Message sendTextMessage(long chatId, String text){
+    public Message sendTextMessage(long chatId, String text) {
         try {
             SendMessage send = new SendMessage().setChatId(chatId);
             send.setText(text.trim());
@@ -38,10 +38,10 @@ public abstract class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public Message sendPhotoMessage(long chatId, String caption, File file){
+    public Message sendPhotoMessage(long chatId, String caption, File file) {
         try {
             SendPhoto send = new SendPhoto().setChatId(chatId).setPhoto(file);
-            if(caption != null){
+            if (caption != null) {
                 send = send.setCaption(caption);
             }
             return execute(send);
@@ -51,10 +51,10 @@ public abstract class Bot extends TelegramLongPollingBot {
         }
     }
 
-    public Message sendAnimationMessage(long chatId, String caption, File file){
+    public Message sendAnimationMessage(long chatId, String caption, File file) {
         try {
             SendAnimation send = new SendAnimation().setChatId(chatId).setAnimation(file);
-            if(caption != null){
+            if (caption != null) {
                 send = send.setCaption(caption);
             }
             return execute(send);

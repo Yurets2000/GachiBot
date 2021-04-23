@@ -1,4 +1,4 @@
-package com.acts.gachibot;
+package com.yube.bot;
 
 public enum BotState {
     WORKING, STOPPED
