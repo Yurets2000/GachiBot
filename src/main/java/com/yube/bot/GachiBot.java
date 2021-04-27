@@ -11,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -28,7 +29,8 @@ public class GachiBot extends Bot {
     private final static String GIFS_DIRECTORY = "gifs";
     private final static String VOICES_DIRECTORY = "sound";
     private final static String BOT_SHORTCUT = "@deep_dark_bot";
-    private final ConcurrentMap<Long, BotState> map = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, BotState> botStateMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Long> userCommandTimeMap = new ConcurrentHashMap<>();
     private List<String> answers;
     private List<String> videoIds;
     private List<String[]> voiceMetadata;
@@ -39,12 +41,14 @@ public class GachiBot extends Bot {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args == null || args.length != 2) {
-            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
-        } else {
-            ApiContextInitializer.init();
-            Bot.runBot(new GachiBot(args[0], args[1]));
-        }
+//        if (args == null || args.length != 2) {
+//            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
+//        } else {
+//            ApiContextInitializer.init();
+//            Bot.runBot(new GachiBot(args[0], args[1]));
+//        }
+        ApiContextInitializer.init();
+        Bot.runBot(new GachiBot("1121619285:AAHF7b8rYO-ZP1rfWY-YaU3Kx0hldY_86H0", "GachiBot"));
     }
 
     protected void loadResources() throws IOException, CsvException {
@@ -82,14 +86,14 @@ public class GachiBot extends Bot {
                 long chatId = message.getChatId();
                 boolean isGroupChat = message.getChat().isGroupChat() || message.getChat().isSuperGroupChat();
                 String text = update.getMessage().getText().trim();
-                map.putIfAbsent(chatId, BotState.WORKING);
+                botStateMap.putIfAbsent(chatId, BotState.WORKING);
                 if (checkTextIsCommand(text, "start", isGroupChat)) {
-                    map.put(chatId, BotState.WORKING);
+                    botStateMap.put(chatId, BotState.WORKING);
                     sendTextMessage(chatId, "What are you want, leatherman?");
-                } else if (map.get(chatId) != BotState.STOPPED) {
+                } else if (botStateMap.get(chatId) != BotState.STOPPED) {
                     if (checkTextIsCommand(text, "stop", isGroupChat)) {
                         sendTextMessage(chatId, "Goodbye cruel world!");
-                        map.put(chatId, BotState.STOPPED);
+                        botStateMap.put(chatId, BotState.STOPPED);
                     } else if (checkTextIsCommand(text, "talk", isGroupChat)) {
                         String answer = getRandomAnswer();
                         sendTextMessage(chatId, answer);
@@ -104,6 +108,28 @@ public class GachiBot extends Bot {
                     } else if (checkTextIsCommand(text, "randomgachibass", isGroupChat)) {
                         String videoUrl = getRandomYoutubeVideoUrl();
                         sendTextMessage(chatId, videoUrl);
+                    } else if (checkTextIsCommand(text, "mantest", isGroupChat)) {
+                        User user = message.getFrom();
+                        if (user != null) {
+                            String username = "@" + user.getUserName();
+                            int userId = user.getId();
+                            String key = String.format("%s:mantest", userId);
+                            String response;
+                            if (userCommandTimeMap.containsKey(key)) {
+                                long lastSuccessfulCommandCallTime = userCommandTimeMap.get(key);
+                                long dayMillis = 24 * 3600 * 1000;
+                                if (System.currentTimeMillis() - lastSuccessfulCommandCallTime > dayMillis) {
+                                    response = String.format("%s, you are on %d%% ♂manly♂", username, (int) (Math.random() * 100));
+                                    userCommandTimeMap.put(key, System.currentTimeMillis());
+                                } else {
+                                    response = String.format("%s, you already have tested how ♂manly♂ you today, try another time!", username);
+                                }
+                            } else {
+                                response = String.format("%s, you are on %d%% ♂manly♂", username, (int) (Math.random() * 100));
+                                userCommandTimeMap.put(key, System.currentTimeMillis());
+                            }
+                            sendTextMessage(chatId, response);
+                        }
                     } else if (checkTextIsInlineCommand(text, "voice", isGroupChat)) {
                         List<Object> commandParams = extractInlineCommandParams(text);
                         if (commandParams.size() == 1) {
