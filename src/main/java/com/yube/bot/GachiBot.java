@@ -40,12 +40,14 @@ public class GachiBot extends Bot {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args == null || args.length != 2) {
-            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
-        } else {
-            ApiContextInitializer.init();
-            Bot.runBot(new GachiBot(args[0], args[1]));
-        }
+//        if (args == null || args.length != 2) {
+//            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
+//        } else {
+//            ApiContextInitializer.init();
+//            Bot.runBot(new GachiBot(args[0], args[1]));
+//        }
+        ApiContextInitializer.init();
+        Bot.runBot(new GachiBot("1121619285:AAHF7b8rYO-ZP1rfWY-YaU3Kx0hldY_86H0", "GachiBot"));
     }
 
     protected void loadResources() throws IOException, CsvException {
@@ -135,23 +137,23 @@ public class GachiBot extends Bot {
     private List<String> getVideoIdsFromPlaylist(String playlistUrl) throws IOException {
         Document pageDocument = Jsoup.connect(playlistUrl).get();
         String pageScriptsText = pageDocument.select("script").html();
+        System.out.println(pageScriptsText);
         List<String> playlistVideoListRendererList =
                 JsonUtils.getJsonListByContainingField(pageScriptsText, "playlistVideoListRenderer");
-        if (playlistVideoListRendererList.isEmpty()) {
-            return null;
-        }
-        String playlistVideoListRenderer = playlistVideoListRendererList.get(0);
-        JSONObject playlistVideoListRendererJson = new JSONObject(playlistVideoListRenderer)
-                .getJSONObject("playlistVideoListRenderer");
-        List<JSONObject> contentJsons = JsonUtils.getJsonObjects(playlistVideoListRendererJson.getJSONArray("contents"));
         List<String> videoIds = new ArrayList<>();
-        for (JSONObject contentJson : contentJsons) {
-            if (!contentJson.has("playlistVideoRenderer")) continue;
-            JSONObject playlistVideoRendererJson = contentJson.getJSONObject("playlistVideoRenderer");
-            boolean isPlayable = playlistVideoRendererJson.getBoolean("isPlayable");
-            if (!isPlayable) continue;
-            String videoId = playlistVideoRendererJson.getString("videoId");
-            videoIds.add(videoId);
+        if (!playlistVideoListRendererList.isEmpty()) {
+            String playlistVideoListRenderer = playlistVideoListRendererList.get(0);
+            JSONObject playlistVideoListRendererJson = new JSONObject(playlistVideoListRenderer)
+                    .getJSONObject("playlistVideoListRenderer");
+            List<JSONObject> contentJsons = JsonUtils.getJsonObjects(playlistVideoListRendererJson.getJSONArray("contents"));
+            for (JSONObject contentJson : contentJsons) {
+                if (!contentJson.has("playlistVideoRenderer")) continue;
+                JSONObject playlistVideoRendererJson = contentJson.getJSONObject("playlistVideoRenderer");
+                boolean isPlayable = playlistVideoRendererJson.getBoolean("isPlayable");
+                if (!isPlayable) continue;
+                String videoId = playlistVideoRendererJson.getString("videoId");
+                videoIds.add(videoId);
+            }
         }
         return videoIds;
     }
