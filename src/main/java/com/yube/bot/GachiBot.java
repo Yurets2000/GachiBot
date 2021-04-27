@@ -28,7 +28,6 @@ public class GachiBot extends Bot {
     private final static String GIFS_DIRECTORY = "gifs";
     private final static String VOICES_DIRECTORY = "sound";
     private final static String BOT_SHORTCUT = "@deep_dark_bot";
-    private final static String VIDEOS_PLAYLIST = "https://www.youtube.com/playlist?list=PLHHYuo8wPxUxa_yHIB3Je8RsNzDP08uut";
     private final ConcurrentMap<Long, BotState> map = new ConcurrentHashMap<>();
     private List<String> answers;
     private List<String> videoIds;
@@ -61,7 +60,9 @@ public class GachiBot extends Bot {
     }
 
     protected void loadVideoIds() throws IOException {
-        videoIds = getVideoIdsFromPlaylist(VIDEOS_PLAYLIST);
+        FileReader fileReader = new FileReader("src/main/resources/text/videoIds.txt");
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        videoIds = bufferedReader.lines().collect(Collectors.toList());
     }
 
     protected void loadVoiceMetadata() throws IOException, CsvException {
@@ -134,7 +135,6 @@ public class GachiBot extends Bot {
 
     private List<String> getVideoIdsFromPlaylist(String playlistUrl) throws IOException {
         Document pageDocument = Jsoup.connect(playlistUrl).get();
-        System.out.println(pageDocument.html());
         String pageScriptsText = pageDocument.select("script").html();
         List<String> playlistVideoListRendererList =
                 JsonUtils.getJsonListByContainingField(pageScriptsText, "playlistVideoListRenderer");
