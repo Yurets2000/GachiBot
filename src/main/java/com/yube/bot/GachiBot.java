@@ -111,7 +111,7 @@ public class GachiBot extends Bot {
                         if (user != null) {
                             String username = "@" + user.getUserName();
                             int userId = user.getId();
-                            String key = String.format("%s:mantest", userId);
+                            String key = String.format("%s:%s:mantest", isGroupChat, userId);
                             String response;
                             if (userCommandTimeMap.containsKey(key)) {
                                 long lastSuccessfulCommandCallTime = userCommandTimeMap.get(key);
