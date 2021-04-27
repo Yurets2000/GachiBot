@@ -41,14 +41,12 @@ public class GachiBot extends Bot {
     }
 
     public static void main(String[] args) throws Exception {
-//        if (args == null || args.length != 2) {
-//            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
-//        } else {
-//            ApiContextInitializer.init();
-//            Bot.runBot(new GachiBot(args[0], args[1]));
-//        }
-        ApiContextInitializer.init();
-        Bot.runBot(new GachiBot("1121619285:AAHF7b8rYO-ZP1rfWY-YaU3Kx0hldY_86H0", "GachiBot"));
+        if (args == null || args.length != 2) {
+            System.out.println("You must run bot with 2 args - BotToken and bot UserName");
+        } else {
+            ApiContextInitializer.init();
+            Bot.runBot(new GachiBot(args[0], args[1]));
+        }
     }
 
     protected void loadResources() throws IOException, CsvException {
