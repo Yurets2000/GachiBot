@@ -134,8 +134,8 @@ public class GachiBot extends Bot {
 
     private List<String> getVideoIdsFromPlaylist(String playlistUrl) throws IOException {
         Document pageDocument = Jsoup.connect(playlistUrl).get();
+        System.out.println(pageDocument.html());
         String pageScriptsText = pageDocument.select("script").html();
-        System.out.println(pageScriptsText);
         List<String> playlistVideoListRendererList =
                 JsonUtils.getJsonListByContainingField(pageScriptsText, "playlistVideoListRenderer");
         List<String> videoIds = new ArrayList<>();
