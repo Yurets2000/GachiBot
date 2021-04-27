@@ -8,8 +8,6 @@ import com.yube.utils.TextUtils;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -147,7 +145,7 @@ public class GachiBot extends Bot {
                 .getJSONObject("playlistVideoListRenderer");
         List<JSONObject> contentJsons = JsonUtils.getJsonObjects(playlistVideoListRendererJson.getJSONArray("contents"));
         List<String> videoIds = new ArrayList<>();
-        for(JSONObject contentJson: contentJsons) {
+        for (JSONObject contentJson : contentJsons) {
             if (!contentJson.has("playlistVideoRenderer")) continue;
             JSONObject playlistVideoRendererJson = contentJson.getJSONObject("playlistVideoRenderer");
             boolean isPlayable = playlistVideoRendererJson.getBoolean("isPlayable");
