@@ -111,7 +111,7 @@ public class GachiBot extends Bot {
                         if (user != null) {
                             String username = "@" + user.getUserName();
                             int userId = user.getId();
-                            String key = String.format("%s:%s:mantest", isGroupChat, userId);
+                            String key = String.format("%s:%s:mantest", userId, chatId);
                             String response;
                             if (userCommandTimeMap.containsKey(key)) {
                                 long lastSuccessfulCommandCallTime = userCommandTimeMap.get(key);
@@ -120,7 +120,7 @@ public class GachiBot extends Bot {
                                     response = String.format("%s, you are on %d%% ♂manly♂", username, (int) (Math.random() * 100));
                                     userCommandTimeMap.put(key, System.currentTimeMillis());
                                 } else {
-                                    response = String.format("%s, you already have tested how ♂manly♂ you today, try another time!", username);
+                                    response = String.format("%s, you already have tested how ♂manly♂ you in this chat today, try another time!", username);
                                 }
                             } else {
                                 response = String.format("%s, you are on %d%% ♂manly♂", username, (int) (Math.random() * 100));
