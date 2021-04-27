@@ -3,7 +3,13 @@ package com.yube.bot;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
 import com.yube.utils.FileUtils;
+import com.yube.utils.JsonUtils;
 import com.yube.utils.TextUtils;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -24,8 +30,10 @@ public class GachiBot extends Bot {
     private final static String GIFS_DIRECTORY = "gifs";
     private final static String VOICES_DIRECTORY = "sound";
     private final static String BOT_SHORTCUT = "@deep_dark_bot";
+    private final static String VIDEOS_PLAYLIST = "https://www.youtube.com/playlist?list=PLHHYuo8wPxUxa_yHIB3Je8RsNzDP08uut";
     private final ConcurrentMap<Long, BotState> map = new ConcurrentHashMap<>();
     private List<String> answers;
+    private List<String> videoIds;
     private List<String[]> voiceMetadata;
 
     protected GachiBot(String token, String botName) throws Exception {
@@ -43,11 +51,25 @@ public class GachiBot extends Bot {
     }
 
     protected void loadResources() throws IOException, CsvException {
+        loadAnswers();
+        loadVideoIds();
+        loadVoiceMetadata();
+    }
+
+    protected void loadAnswers() throws FileNotFoundException {
         FileReader fileReader = new FileReader("src/main/resources/text/answers.txt");
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         answers = bufferedReader.lines().collect(Collectors.toList());
+    }
+
+    protected void loadVideoIds() throws IOException {
+        videoIds = getVideoIdsFromPlaylist(VIDEOS_PLAYLIST);
+    }
+
+    protected void loadVoiceMetadata() throws IOException, CsvException {
         CSVReader reader = new CSVReader(new FileReader("src/main/resources/sound/metadata.csv"));
         voiceMetadata = reader.readAll();
+        reader.close();
     }
 
     protected void processTheException(Exception e) {
@@ -80,6 +102,9 @@ public class GachiBot extends Bot {
                         sendAnimationMessage(chatId, null, gif);
                     } else if (checkTextIsCommand(text, "voicelist", isGroupChat)) {
                         sendTextMessage(chatId, getVoiceList(), true);
+                    } else if (checkTextIsCommand(text, "randomgachibass", isGroupChat)) {
+                        String videoUrl = getRandomYoutubeVideoUrl();
+                        sendTextMessage(chatId, videoUrl);
                     } else if (checkTextIsInlineCommand(text, "voice", isGroupChat)) {
                         List<Object> commandParams = extractInlineCommandParams(text);
                         if (commandParams.size() == 1) {
@@ -102,6 +127,35 @@ public class GachiBot extends Bot {
         } catch (Exception e) {
             processTheException(e);
         }
+    }
+
+    private String getRandomYoutubeVideoUrl() {
+        String videoId = videoIds.get((int) (videoIds.size() * Math.random()));
+        return "https://www.youtube.com/watch?v=" + videoId;
+    }
+
+    private List<String> getVideoIdsFromPlaylist(String playlistUrl) throws IOException {
+        Document pageDocument = Jsoup.connect(playlistUrl).get();
+        String pageScriptsText = pageDocument.select("script").html();
+        List<String> playlistVideoListRendererList =
+                JsonUtils.getJsonListByContainingField(pageScriptsText, "playlistVideoListRenderer");
+        if (playlistVideoListRendererList.isEmpty()) {
+            return null;
+        }
+        String playlistVideoListRenderer = playlistVideoListRendererList.get(0);
+        JSONObject playlistVideoListRendererJson = new JSONObject(playlistVideoListRenderer)
+                .getJSONObject("playlistVideoListRenderer");
+        List<JSONObject> contentJsons = JsonUtils.getJsonObjects(playlistVideoListRendererJson.getJSONArray("contents"));
+        List<String> videoIds = new ArrayList<>();
+        for(JSONObject contentJson: contentJsons) {
+            if (!contentJson.has("playlistVideoRenderer")) continue;
+            JSONObject playlistVideoRendererJson = contentJson.getJSONObject("playlistVideoRenderer");
+            boolean isPlayable = playlistVideoRendererJson.getBoolean("isPlayable");
+            if (!isPlayable) continue;
+            String videoId = playlistVideoRendererJson.getString("videoId");
+            videoIds.add(videoId);
+        }
+        return videoIds;
     }
 
     private boolean checkTextIsCommand(String text, String command, boolean isGroupChat) {
